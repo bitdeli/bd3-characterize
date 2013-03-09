@@ -9,7 +9,7 @@ def create_table(model, keys, keyfun, num_uids, label):
     def make_rows():
         counts = Counter()
         for key in keys:
-            print key
+            print key.decode('utf-8')
             counts[keyfun(key)] += len(model[key])
         for item, count in counts.most_common(TOPN):
             r = count / num_uids
