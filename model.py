@@ -26,5 +26,5 @@ def build(profiles):
                 yield 'p%s:%s' % (prop_name, v.encode('utf-8')), uid
 
 @segment_model
-def segment(model, segments):
-    return model, segments
+def segment(model, segments, labels):
+    return model, segments, labels
