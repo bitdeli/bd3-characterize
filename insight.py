@@ -5,7 +5,7 @@ from bitdeli.widgets import Text, Bar, Table
 def view(model, params):
     if type(model) == tuple:
         yield Text(size=(12, 2),
-                   data={'head': 'yay %s' % model})
+                   data={'head': 'yay %s' % str(model)})
     else:
         yield Text(size=(12, 2),
                    data={'head': 'Add a segment to get started'})
