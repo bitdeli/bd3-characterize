@@ -19,7 +19,7 @@ def build(profiles):
             continue
         for event, hours in profile['events'].iteritems():
             event = event.encode('utf-8')
-            yield 'e%s%s' % (count_events(hours), event), uid
+            yield 'e:%s%s' % (count_events(hours), event), uid
         for prop_name, prop_values in profile['properties'].iteritems():
             prop_name = prop_name.encode('utf-8')
             for v in frozenset(prop_value[:MAX_LEN] for prop_value in prop_values):
