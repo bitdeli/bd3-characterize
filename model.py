@@ -1,4 +1,5 @@
 from bitdeli.model import model, segment_model
+from collections import namedtuple
 
 MAX_LEN = 32
 CUTOFF = 4
@@ -27,4 +28,6 @@ def build(profiles):
 
 @segment_model
 def segment(model, segments, labels):
-    return model, segments, labels
+    return namedtuple(model=model,
+                      segments=segments,
+                      labels=labels)

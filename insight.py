@@ -1,7 +1,7 @@
 from bitdeli.insight import insight
 from bitdeli.widgets import Text, Bar, Table
 from itertools import groupby
-from collections import Counter
+from collections import Counter, namedtuple
 
 TOPN = 10
 
@@ -43,9 +43,10 @@ def basic_stats(model):
        
 @insight
 def view(model, params):
-    if type(model) == tuple:
-        yield ext(size=(12, 2),
-                   data={'head': 'yay %s %s' % (map(len, model[1]), str(model[2]))})
+    if hasattr(model, 'segments'):
+        if len(model.segments) == 1:
+            yield Text(size=(12, 2),
+                       data={'head': 'yay %s' % model.labels})
     else:
         for count, widget in sorted(basic_stats(model), reverse=True):
             yield widget
