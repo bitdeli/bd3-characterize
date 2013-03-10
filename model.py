@@ -28,4 +28,5 @@ def build(profiles):
 
 @segment_model
 def segment(model, segments, labels):
-    return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))
+    return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
+                     (model, segments, labels)
