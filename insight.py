@@ -74,9 +74,10 @@ class Comparison(object):
         segment = self.segments[0]
         segment_size = self.segment_sizes[0]
         for key in keys:
-            t = len(model[key])
+            uids = model[key]
+            t = len(uids)
             if t > self.min_users:
-                s = sum(1 for uid in model[key] if uid in segment)
+                s = sum(1 for uid in uids if uid in segment)
                 tr = float(t - s) / self.num_uids
                 sr = float(s) / segment_size
                 d = sr - tr
@@ -90,17 +91,19 @@ class Comparison(object):
         size1, size2 = self.segment_sizes
         for key in keys:
             s1 = s2 = 0
-            for uid in model[key]:
-                if uid in seg1:
-                    s1 += 1
-                if uid in seg2:
-                    s2 += 1
-            r1 = float(s1) / size1
-            r2 = float(s2) / size2
-            d = r1 - r2
-            if abs(d) > DIFF_LIMIT:
-                color = SEG2(abs(r2)) if d < 0 else SEG1(r1)
-                yield d, key, r1, r2, s1, s2, color
+            uids = model[key]
+            if len(uids) > self.min_users: 
+                for uid in uids:
+                    if uid in seg1:
+                        s1 += 1
+                    if uid in seg2:
+                        s2 += 1
+                r1 = float(s1) / size1
+                r2 = float(s2) / size2
+                d = r1 - r2
+                if abs(d) > DIFF_LIMIT:
+                    color = SEG2(abs(r2)) if d < 0 else SEG1(r1)
+                    yield d, key, r1, r2, s1, s2, color
                 
     def _table(self, head, tail, itemlabel, label1, label2):
         def format_item(key):
