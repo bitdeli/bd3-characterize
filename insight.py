@@ -7,8 +7,8 @@ TOPN = 10
 DIFF_TOPN = 3
 DIFF_LIMIT = 0.05
 
-NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % max(0.8, x + 0.1)
-POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % max(0.8, x + 0.1)
+NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.9, x + 0.1)
+POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.9, x + 0.1)
 
 def attributes(model):
     def sort_key(k):
@@ -88,7 +88,7 @@ class Comparison(object):
     
         def rows():           
             for diff, key, ratio1, ratio2, count1, count2 in head + tail:
-                c = NEGATIVE(diff) if diff < 0 else POSITIVE(diff)
+                c = NEGATIVE(abs(diff)) if diff < 0 else POSITIVE(diff)
                 yield {'item': cell(format_item(key), c),
                        'diff': cell('%.1f' % (diff * 100), c),
                        'seg1': cell(format_number(count1, ratio1), c),
@@ -131,7 +131,7 @@ def view(model, params):
         segments = [frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    #model = test_segment()
+    model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments)
         if len(model.segments) == 1:
