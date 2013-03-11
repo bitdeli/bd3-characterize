@@ -8,12 +8,22 @@ TOPN = 10
 DIFF_TOPN = 3
 DIFF_LIMIT = 0.05
 DIFF_MIN_USERS = 10
+DIFF_CAPTION = """
+### What makes {0} different from {1}?
+
+{color1} items are more typical to {0},
+{color2} items are more typical to {1}.
+
+"""
 
 NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
 POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.8, x)
 
 SEG1 = lambda x: 'rgba(118, 192, 255, %f)' % min(0.8, x)
 SEG2 = lambda x: 'rgba(255, 197, 11, %f)' % min(0.8, x)
+
+COLORS = [{'color1': 'Green', 'color2': 'red'},
+          {'color1': 'Yellow', 'color2': 'Blue'}]
 
 def attributes(model):
     def sort_key(k):
@@ -61,7 +71,10 @@ class Stats(object):
 
 class Comparison(object):
 
-    def __init__(self, model, segments):
+    def __init__(self, model, segments, labels):
+        self.labels = labels
+        if len(self.labels) == 1:
+            self.labels.append('all other users')
         self.num_uids = len(model.unique_values())
         self.segment_sizes = map(len, segments)
         self.min_users = max(DIFF_MIN_USERS,
@@ -105,7 +118,7 @@ class Comparison(object):
                     color = SEG2(abs(r2)) if d < 0 else SEG1(r1)
                     yield d, key, r1, r2, s1, s2, color
                 
-    def _table(self, head, tail, itemlabel, label1, label2):
+    def _table(self, head, tail, itemlabel):
         def format_item(key):
             if key[0] == 'e':
                 prefix = 'in' if key[2] == 'l' else ''
@@ -125,14 +138,14 @@ class Comparison(object):
     
         columns = [{'name': 'item', 'label': itemlabel, 'width': '50%'},
                    {'name': 'diff', 'label': 'Difference', 'cell': 'markdown'},
-                   {'name': 'seg1', 'label': label1, 'cell': 'markdown'},
-                   {'name': 'seg2', 'label': label2, 'cell': 'markdown'}]
+                   {'name': 'seg1', 'label': self.labels[0], 'cell': 'markdown'},
+                   {'name': 'seg2', 'label': self.labels[1], 'cell': 'markdown'}]
     
         return Table(size=(12, 'auto'),
                      fixed_width=True,
                      data={'columns': columns, 'rows': list(rows())})
-            
-    def show(self, label1, label2, diff):
+    
+    def show(self, diff):
         def head_and_tail(it):
             head = []
             tail = []
@@ -154,31 +167,37 @@ class Comparison(object):
             if head or tail:
                 label = 'Event' if key == 'e' else key[1:].split(':')[0].capitalize()
                 yield max(abs(x[0]) for x in head + tail),\
-                      self._table(head, tail, label, label1, label2)
+                      self._table(head, tail, label)
         
-
+    def header(self):
+        n = len(self.segments)
+        suffix = 'all other users' if n == 1 else 'another segment'
+        return Text(size=(12, 3),
+                    label='Comparing a segment to ' + suffix,
+                    data={'text': DIFF_CAPTION.format(*self.labels,
+                                                      **COLORS[n - 1])})
+    
+    
 ################################################################################        
 @insight
 def view(model, params):
     def test_segment():
         import random
         random.seed(21)
-        labels = ['First Segment' * 3, 'Second']
+        labels = ['First Segment'] #, 'Second']
         segments = [frozenset(random.sample(model.unique_values(), 10))]
                     #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
     #model = test_segment()
     if hasattr(model, 'segments'):
-        comp = Comparison(model.model, model.segments)
+        comp = Comparison(model.model, model.segments, model.labels)
         if len(model.segments) == 1:
             diff = comp.diff_all
-            label1 = model.labels[0]
-            label2 = 'All other users'
         else:
             diff = comp.diff_two
-            label1, label2 = model.labels
-        tables = comp.show(label1, label2, diff)
+        tables = comp.show(diff)
+        yield comp.header()
     else:
         tables = Stats(model).show()
     for count, widget in sorted(tables, reverse=True):
