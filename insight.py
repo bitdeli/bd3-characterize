@@ -188,7 +188,7 @@ def view(model, params):
                     #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    model = test_segment()
+    #model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments, model.labels)
         if len(model.segments) == 1:
