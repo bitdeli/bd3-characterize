@@ -140,6 +140,7 @@ class Comparison(object):
                         heapq.heappushpop(head, x)
                     else:
                         heapq.heappush(head, x)
+            head.reverse()
             return head, [x[1] for x in tail]
         
         for key, subkeys in attributes(self.model):
