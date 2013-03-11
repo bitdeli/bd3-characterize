@@ -204,7 +204,7 @@ def view(model, params):
             diff = comp.diff_all
         else:
             diff = comp.diff_two
-        tables = comp.make_table(diff)
+        tables = comp.make_tables(diff)
         yield comp.header()
     else:
         stats = Stats(model)
