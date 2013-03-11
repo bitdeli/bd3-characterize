@@ -7,8 +7,11 @@ TOPN = 10
 DIFF_TOPN = 3
 DIFF_LIMIT = 0.05
 
-NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.9, x + 0.1)
-POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.9, x + 0.1)
+NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
+POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.8, x)
+
+SEG1 = lambda x: 'rgba(118, 192, 255, %f)' % min(0.8, x)
+SEG2 = lambda x: 'rgba(255, 197, 11, %f)' % min(0.8, x)
 
 def attributes(model):
     def sort_key(k):
@@ -32,9 +35,9 @@ class Stats(object):
             else:
                 label = key[1:].capitalize()
                 keyfun = lambda x: x.split(':', 1)[1]
-            yield self.basic_table(subkeys, keyfun, label)
+            yield self._table(subkeys, keyfun, label)
         
-    def basic_table(self, keys, keyfun, label):
+    def _table(self, keys, keyfun, label):
         model = self.model
         def make_rows():
             counts = Counter()
@@ -73,9 +76,28 @@ class Comparison(object):
             sr = float(s) / segment_size
             d = sr - tr
             if abs(d) > DIFF_LIMIT:
-                yield d, key, sr, tr, s, t - s
-
-    def diff_table(self, head, tail, itemlabel, label1, label2):
+                color = NEGATIVE(abs(d)) if d < 0 else POSITIVE(d)
+                yield d, key, sr, tr, s, t - s, color
+                
+    def diff_two(self, keys):
+        model = self.model
+        seg1, seg2 = self.segments
+        size1, size2 = self.segment_sizes
+        for key in keys:
+            s1 = s2 = 0
+            for uid in model[key]:
+                if uid in seg1:
+                    s1 += 1
+                if uid in seg2:
+                    s2 += 1
+            r1 = float(s1) / size1
+            r2 = float(s2) / size2
+            d = r1 - r2
+            if abs(d) > DIFF_LIMIT:
+                color = SEG2(abs(r2)) if d < 0 else SEG1(r1)
+                yield d, key, r1, r2, s1, s2, color
+                
+    def _table(self, head, tail, itemlabel, label1, label2):
         def format_item(key):
             if key[0] == 'e':
                 prefix = 'in' if key[2] == 'l' else ''
@@ -87,12 +109,11 @@ class Comparison(object):
             return '**{0:.1f}%** ({1:,})'.format(ratio * 100, count)
     
         def rows():           
-            for diff, key, ratio1, ratio2, count1, count2 in head + tail:
-                c = NEGATIVE(abs(diff)) if diff < 0 else POSITIVE(diff)
-                yield {'item': cell(format_item(key), c),
-                       'diff': cell('%.1f' % (diff * 100), c),
-                       'seg1': cell(format_number(count1, ratio1), c),
-                       'seg2': cell(format_number(count2, ratio2), c)}
+            for diff, key, ratio1, ratio2, count1, count2, color in head + tail:
+                yield {'item': cell(format_item(key), color),
+                       'diff': cell('%.1f' % (diff * 100), color),
+                       'seg1': cell(format_number(count1, ratio1), color),
+                       'seg2': cell(format_number(count2, ratio2), color)}
     
         columns = [{'name': 'item', 'label': itemlabel, 'width': '50%'},
                    {'name': 'diff', 'label': 'Difference', 'cell': 'markdown'},
@@ -118,17 +139,18 @@ class Comparison(object):
             if head or tail:
                 label = 'Event' if key == 'e' else key[1:].split(':')[0].capitalize()
                 yield max(abs(x[0]) for x in head + tail),\
-                      self.diff_table(head, tail, label, label1, label2)
+                      self._table(head, tail, label, label1, label2)
         
 
-'################################################################################'        
+################################################################################        
 @insight
 def view(model, params):
     def test_segment():
         import random
-        random.seed(1)
-        labels = ['First Segment' * 3]
-        segments = [frozenset(random.sample(model.unique_values(), 200))]
+        random.seed(2)
+        labels = ['First Segment' * 3, 'Second']
+        segments = [frozenset(random.sample(model.unique_values(), 200)),
+                    frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
     #model = test_segment()
