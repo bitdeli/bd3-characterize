@@ -7,6 +7,7 @@ import heapq
 TOPN = 10
 DIFF_TOPN = 3
 DIFF_LIMIT = 0.05
+DIFF_MIN_USERS = 10
 
 NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
 POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.8, x)
@@ -63,6 +64,8 @@ class Comparison(object):
     def __init__(self, model, segments):
         self.num_uids = len(model.unique_values())
         self.segment_sizes = map(len, segments)
+        self.min_users = max(DIFF_MIN_USERS,
+                             int(DIFF_LIMIT * min(self.segment_sizes)))
         self.model = model
         self.segments = segments
            
@@ -72,13 +75,14 @@ class Comparison(object):
         segment_size = self.segment_sizes[0]
         for key in keys:
             t = len(model[key])
-            s = sum(1 for uid in model[key] if uid in segment)
-            tr = float(t - s) / self.num_uids
-            sr = float(s) / segment_size
-            d = sr - tr
-            if abs(d) > DIFF_LIMIT:
-                color = NEGATIVE(abs(d)) if d < 0 else POSITIVE(d)
-                yield d, key, sr, tr, s, t - s, color
+            if t > self.min_users:
+                s = sum(1 for uid in model[key] if uid in segment)
+                tr = float(t - s) / self.num_uids
+                sr = float(s) / segment_size
+                d = sr - tr
+                if abs(d) > DIFF_LIMIT:
+                    color = NEGATIVE(abs(d)) if d < 0 else POSITIVE(d)
+                    yield d, key, sr, tr, s, t - s, color
                 
     def diff_two(self, keys):
         model = self.model
