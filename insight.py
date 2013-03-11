@@ -140,8 +140,7 @@ class Comparison(object):
                         heapq.heappushpop(head, x)
                     else:
                         heapq.heappush(head, x)
-            head.reverse()
-            return head, [x[1] for x in tail]
+            return sorted(head, reverse=True), [x[1] for x in sorted(tail)]
         
         for key, subkeys in attributes(self.model):
             head, tail = head_and_tail(diff(subkeys))
@@ -156,13 +155,13 @@ class Comparison(object):
 def view(model, params):
     def test_segment():
         import random
-        random.seed(2)
+        random.seed(21)
         labels = ['First Segment' * 3, 'Second']
-        segments = [frozenset(random.sample(model.unique_values(), 200))]
+        segments = [frozenset(random.sample(model.unique_values(), 10))]
                     #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    #model = test_segment()
+    model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments)
         if len(model.segments) == 1:
