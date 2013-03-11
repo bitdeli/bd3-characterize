@@ -1,7 +1,8 @@
 from bitdeli.insight import insight
-from bitdeli.widgets import Text, Bar, Table
+from bitdeli.widgets import Text, Table
 from itertools import groupby, islice
 from collections import Counter, namedtuple
+import heapq
 
 TOPN = 10
 DIFF_TOPN = 3
@@ -71,7 +72,7 @@ class Comparison(object):
         segment_size = self.segment_sizes[0]
         for key in keys:
             t = len(model[key])
-            s = 0 #sum(1 for uid in model[key] if uid in segment)
+            s = sum(1 for uid in model[key] if uid in segment)
             tr = float(t - s) / self.num_uids
             sr = float(s) / segment_size
             d = sr - tr
@@ -135,7 +136,9 @@ class Comparison(object):
             return head, tail
         
         for key, subkeys in attributes(self.model):
-            head, tail = head_and_tail(sorted(diff(subkeys), reverse=True))
+            entries = set(diff(subkeys))
+            head = heapq.nlargest(DIFF_TOPN, entries)
+            tail = heapq.nsmallest(DIFF_TOPN, entries - frozenset(head))
             if head or tail:
                 label = 'Event' if key == 'e' else key[1:].split(':')[0].capitalize()
                 yield max(abs(x[0]) for x in head + tail),\
