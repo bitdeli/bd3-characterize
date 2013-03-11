@@ -126,16 +126,7 @@ class Comparison(object):
                      data={'columns': columns, 'rows': list(rows())})
             
     def show(self, label1, label2, diff):
-        def head_and_tail(lst, n=DIFF_TOPN):
-            head = tail = []
-            for positive, items in groupby(lst, lambda x: x[0] >= 0):
-                if positive:
-                    head = list(islice(items, n))
-                else:
-                    tail = list(items)[-n:]
-            return head, tail
-        
-        def partition(it):
+        def head_and_tail(it):
             head = []
             tail = []
             for x in it:
@@ -149,12 +140,11 @@ class Comparison(object):
                         heapq.heappushpop(head, x)
                     else:
                         heapq.heappush(head, x)
+            tail.reverse()
             return head, [x[1] for x in tail]
         
         for key, subkeys in attributes(self.model):
-            head, tail = partition(diff(subkeys))
-            #head = heapq.nlargest(DIFF_TOPN, pos)
-            #tail = heapq.nsmallest(DIFF_TOPN, neg)
+            head, tail = head_and_tail(diff(subkeys))
             if head or tail:
                 label = 'Event' if key == 'e' else key[1:].split(':')[0].capitalize()
                 yield max(abs(x[0]) for x in head + tail),\
