@@ -13,7 +13,6 @@ DIFF_CAPTION = """
 
 {color1} items are more typical to {0},
 {color2} items are more typical to {1}.
-
 """
 
 NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
@@ -172,7 +171,7 @@ class Comparison(object):
     def header(self):
         n = len(self.segments)
         suffix = 'all other users' if n == 1 else 'another segment'
-        return Text(size=(12, 3),
+        return Text(size=(12, 'auto'),
                     label='Comparing a segment to ' + suffix,
                     data={'text': DIFF_CAPTION.format(*self.labels,
                                                       **COLORS[n - 1])})
@@ -189,7 +188,7 @@ def view(model, params):
                     #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    #model = test_segment()
+    model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments, model.labels)
         if len(model.segments) == 1:
