@@ -70,22 +70,14 @@ class Comparison(object):
         segment = self.segments[0]
         segment_size = self.segment_sizes[0]
         for key in keys:
-            t = s = 0
-            for uid in model[key]:
-                if uid in segment:
-                    s += 1
-                else:
-                    t += 1
-            #t = len(model[key])
-            #s = sum(1 for uid in model[key] if uid in segment)
-            #tr = float(t - s) / self.num_uids
-            tr = float(t) / self.num_uids
+            t = len(model[key])
+            s = 0 #sum(1 for uid in model[key] if uid in segment)
+            tr = float(t - s) / self.num_uids
             sr = float(s) / segment_size
             d = sr - tr
             if abs(d) > DIFF_LIMIT:
                 color = NEGATIVE(abs(d)) if d < 0 else POSITIVE(d)
-                #yield d, key, sr, tr, s, t - s, color
-                yield d, key, sr, tr, s, t, color
+                yield d, key, sr, tr, s, t - s, color
                 
     def diff_two(self, keys):
         model = self.model
@@ -157,11 +149,11 @@ def view(model, params):
         import random
         random.seed(2)
         labels = ['First Segment' * 3, 'Second']
-        segments = [frozenset(random.sample(model.unique_values(), 200)),
-                    frozenset(random.sample(model.unique_values(), 200))]
+        segments = [frozenset(random.sample(model.unique_values(), 200))]
+                    #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    #model = test_segment()
+    model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments)
         if len(model.segments) == 1:
