@@ -136,19 +136,25 @@ class Comparison(object):
             return head, tail
         
         def partition(it):
-            pos = []
-            neg = []
+            head = []
+            tail = []
             for x in it:
                 if x[0] < 0:
-                    neg.append(x)
+                    if len(tail) > DIFF_TOPN:
+                        heapq.heappushpop(tail, (abs(x[0]), x))
+                    else:
+                        heapq.heappush(tail, (abs(x[0]), x))
                 else:
-                    pos.append(x)
-            return pos, neg
+                    if len(head) > DIFF_TOPN:
+                        heapq.heappushpop(head, x)
+                    else:
+                        heapq.heappush(head, x)
+            return head, [x[1] for x in tail]
         
         for key, subkeys in attributes(self.model):
-            pos, neg = partition(diff(subkeys))
-            head = heapq.nlargest(DIFF_TOPN, pos)
-            tail = heapq.nsmallest(DIFF_TOPN, neg)
+            head, tail = partition(diff(subkeys))
+            #head = heapq.nlargest(DIFF_TOPN, pos)
+            #tail = heapq.nsmallest(DIFF_TOPN, neg)
             if head or tail:
                 label = 'Event' if key == 'e' else key[1:].split(':')[0].capitalize()
                 yield max(abs(x[0]) for x in head + tail),\
@@ -166,7 +172,7 @@ def view(model, params):
                     #frozenset(random.sample(model.unique_values(), 200))]
         return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
                          (model, segments, labels)
-    #model = test_segment()
+    model = test_segment()
     if hasattr(model, 'segments'):
         comp = Comparison(model.model, model.segments)
         if len(model.segments) == 1:
