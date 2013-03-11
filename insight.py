@@ -72,7 +72,7 @@ class Comparison(object):
         segment_size = self.segment_sizes[0]
         for key in keys:
             t = len(model[key])
-            s = sum(1 for uid in model[key] if uid in segment)
+            s = len(model[key]) # sum(1 for uid in model[key] if uid in segment)
             tr = float(t - s) / self.num_uids
             sr = float(s) / segment_size
             d = sr - tr
