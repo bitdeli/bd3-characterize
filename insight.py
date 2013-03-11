@@ -16,7 +16,7 @@ DIFF_CAPTION = """
 """
 
 STATS_CAPTION = """
-### Top events and properties for all users
+### What are top events and properties for all users?
 """
 
 NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
