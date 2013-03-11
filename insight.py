@@ -15,6 +15,10 @@ DIFF_CAPTION = """
 {color2} items are more typical to {1}.
 """
 
+STATS_CAPTION = """
+### Top events and properties for all users
+"""
+
 NEGATIVE = lambda x: 'rgba(255, 36, 0, %f)' % min(0.8, x)
 POSITIVE = lambda x: 'rgba(0, 163, 89, %f)' % min(0.8, x)
 
@@ -22,7 +26,7 @@ SEG1 = lambda x: 'rgba(118, 192, 255, %f)' % min(0.8, x)
 SEG2 = lambda x: 'rgba(255, 197, 11, %f)' % min(0.8, x)
 
 COLORS = [{'color1': 'Green', 'color2': 'red'},
-          {'color1': 'Yellow', 'color2': 'Blue'}]
+          {'color1': 'Blue', 'color2': 'yellow'}]
 
 def attributes(model):
     def sort_key(k):
@@ -38,7 +42,12 @@ class Stats(object):
         self.num_uids = float(len(model.unique_values()))
         self.model = model
 
-    def show(self):
+    def header(self):
+        return Text(size=(12, 'auto'),
+                    label='Showing top events and properties',
+                    data={'text': STATS_CAPTION})
+        
+    def make_tables(self):
         for key, subkeys in attributes(self.model):
             if key == 'e':
                 label = 'Event'
@@ -144,7 +153,7 @@ class Comparison(object):
                      fixed_width=True,
                      data={'columns': columns, 'rows': list(rows())})
     
-    def show(self, diff):
+    def make_tables(self, diff):
         def head_and_tail(it):
             head = []
             tail = []
@@ -195,10 +204,13 @@ def view(model, params):
             diff = comp.diff_all
         else:
             diff = comp.diff_two
-        tables = comp.show(diff)
+        tables = comp.make_table(diff)
         yield comp.header()
     else:
-        tables = Stats(model).show()
+        stats = Stats(model)
+        tables = stats.make_tables()
+        yield stats.header()
+        
     for count, widget in sorted(tables, reverse=True):
         yield widget
         
