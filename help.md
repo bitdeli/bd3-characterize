@@ -12,5 +12,5 @@ that set users in those segments apart. Features are always sorted
 from the most to the least distinctive.
 
 **Example:** See what sets *Most active* and *Least active* users
-apart by creating both segments from the *Activity Distribution*
-insight.
+apart by creating both segments from
+[Activity Distribution](/explore/bitdeli/activity-distribution).
