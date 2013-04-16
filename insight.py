@@ -4,6 +4,7 @@ from itertools import groupby, islice
 from collections import Counter, namedtuple
 import heapq
 
+MAX_TABLES = 20
 TOPN = 10
 DIFF_TOPN = 3
 DIFF_LIMIT = 0.05
@@ -211,7 +212,13 @@ def view(model, params):
         tables = stats.make_tables()
         yield stats.header()
         
-    for count, widget in sorted(tables, reverse=True):
+    tables = list(sorted(tables, reverse=True))
+    for count, widget in tables[:MAX_TABLES]:
         yield widget
+    if len(tables) > MAX_TABLES:
+        yield Text(size=(12, 1),
+                   data={'text': "Showing only the %d most characteristic "
+                                 "properties out of %d properties in total." %\
+                                 (MAX_TABLES, len(tables))})
         
         
