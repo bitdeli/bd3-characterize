@@ -1,5 +1,6 @@
 from bitdeli.insight import insight
 from bitdeli.widgets import Text, Table
+from discodb.query import Q, Literal, Clause
 from itertools import groupby, islice
 from collections import Counter, namedtuple
 import heapq
@@ -80,7 +81,8 @@ class Stats(object):
 
 class Comparison(object):
 
-    def __init__(self, model, segments, labels):
+    def __init__(self, model, segments, labels, views):
+        self.views = views
         self.labels = labels
         if len(self.labels) == 1:
             self.labels.append('all other users')
@@ -93,13 +95,15 @@ class Comparison(object):
            
     def diff_all(self, keys):
         model = self.model
+        view = self.views[0]
         segment = self.segments[0]
         segment_size = self.segment_sizes[0]
         for key in keys:
             uids = model[key]
             t = len(uids)
             if t > self.min_users:
-                s = sum(1 for uid in uids if uid in segment)
+                s = len(model.query(Literal(key), view=view))
+                #s = sum(1 for uid in uids if uid in segment)
                 tr = float(t - s) / self.num_uids
                 sr = float(s) / segment_size
                 d = sr - tr
@@ -110,16 +114,12 @@ class Comparison(object):
     def diff_two(self, keys):
         model = self.model
         seg1, seg2 = self.segments
+        view1, view2 = self.views
         size1, size2 = self.segment_sizes
         for key in keys:
-            s1 = s2 = 0
-            uids = model[key]
-            if len(uids) > self.min_users: 
-                for uid in uids:
-                    if uid in seg1:
-                        s1 += 1
-                    if uid in seg2:
-                        s2 += 1
+            if len(model[key]) > self.min_users:
+                s1 = len(model.query(Literal(key), view=view1))
+                s2 = len(model.query(Literal(key), view=view2))
                 r1 = float(s1) / size1
                 r2 = float(s2) / size2
                 d = r1 - r2
@@ -194,13 +194,13 @@ def view(model, params):
         import random
         random.seed(21)
         labels = ['First Segment'] #, 'Second']
-        segments = [frozenset(random.sample(model.unique_values(), 10))]
+        segments = [frozenset(random.sample(model.unique_values(), 20))]
                     #frozenset(random.sample(model.unique_values(), 200))]
-        return namedtuple('SegmentInfo', ('model', 'segments', 'labels'))\
-                         (model, segments, labels)
+        return namedtuple('SegmentInfo', ('model', 'segments', 'labels', 'views'))\
+                         (model, segments, labels, map(model.make_view, segments))
     #model = test_segment()
     if hasattr(model, 'segments'):
-        comp = Comparison(model.model, model.segments, model.labels)
+        comp = Comparison(model.model, model.segments, model.labels, model.views)
         if len(model.segments) == 1:
             diff = comp.diff_all
         else:
@@ -220,5 +220,4 @@ def view(model, params):
                    data={'text': "Showing only the %d most characteristic "
                                  "properties out of %d properties in total." %\
                                  (MAX_TABLES, len(tables))})
-        
-        
+ 
